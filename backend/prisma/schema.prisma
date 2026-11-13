@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+enum OrderChannel {
+  ONLINE
+  DINE_IN
+}
+enum PaymentMethod {
+  COD
+  BANK_TRANSFER
+  PAY_AT_COUNTER
+}
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+enum OrderStatus {
+  NEW
+  ACCEPTED
+  PREPARING
+  READY
+  OUT_FOR_DELIVERY
+  COMPLETED
+  CANCELLED
+}
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("ADMIN")
+  createdAt    DateTime @default(now())
+}
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String   @default("")
+  category    String   @default("Popular")
+  imageUrl    String   @default("")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  variants    ProductVariant[]
+}
+model ProductVariant {
+  id        String  @id @default(cuid())
+  name      String
+  price     Int
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+model RestaurantTable {
+  id        String @id @default(cuid())
+  code      String @unique
+  label     String
+  active    Boolean @default(true)
+}
+model Order {
+  id             String        @id @default(cuid())
+  orderNumber    String        @unique
+  channel        OrderChannel
+  status         OrderStatus   @default(NEW)
+  paymentMethod  PaymentMethod
+  paymentStatus  PaymentStatus @default(PENDING)
+  customerName   String
+  phone          String
+  address        String?
+  area           String?
+  tableCode      String?
+  subtotal       Int
+  deliveryFee    Int            @default(0)
+  total          Int
+  notes          String        @default("")
+  createdAt      DateTime      @default(now())
+  items          OrderItem[]
+}
+model OrderItem {
+  id          String @id @default(cuid())
+  orderId     String
+  order       Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productName String
+  variantName String
+  quantity    Int
+  unitPrice   Int
+}
